@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Study Quest Family v6</title>
+<style>
+:root{--pink:#ff7ab6;--purple:#8b5cf6;--mint:#9ff5cf;--sky:#bdefff;--yellow:#ffe68a;--ink:#40354f;--red:#ff6b6b}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink);background:linear-gradient(135deg,#ffe0ef 0%,#dff6ff 45%,#fff2a8 100%);min-height:100vh}
+.app{max-width:520px;margin:0 auto;padding:18px 14px 96px}
+.hero,.card{background:rgba(255,255,255,.92);border-radius:28px;padding:18px;box-shadow:0 14px 35px rgba(110,80,160,.16);border:3px solid rgba(255,255,255,.72);margin-bottom:14px}
+.title{font-size:30px;font-weight:900;margin:0;text-align:center;color:var(--purple)}
+.subtitle{text-align:center;margin:6px 0 14px;font-weight:700;color:#785e90}
+.tabs,.mode-tabs{display:flex;gap:9px;margin:12px 0;flex-wrap:wrap}
+.tab,.mode{flex:1;border:0;border-radius:999px;padding:12px 10px;font-weight:900;font-size:15px;background:#fff;color:var(--ink);box-shadow:0 5px 10px rgba(0,0,0,.08);min-width:120px}
+.tab.active,.mode.active{background:var(--purple);color:#fff}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.stat{background:#fff;border-radius:18px;padding:12px;text-align:center}
+.big{font-size:25px;font-weight:900;color:var(--pink)}
+.label{font-size:12px;font-weight:800;color:#766985}
+.card h2{margin:0 0 10px;font-size:19px}
+.quest{background:#fff;border:2px solid #f4e8ff;border-radius:20px;padding:14px;margin:10px 0}
+.quest-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.subject{font-weight:900;color:var(--purple)}
+.badge{font-size:12px;font-weight:900;border-radius:999px;padding:6px 9px;background:var(--yellow);white-space:nowrap}
+.pending{background:#ffe0e6}.approved{background:#d7ffe8}
+.pages{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.page{border:0;border-radius:14px;padding:9px 11px;background:#f0edf8;font-weight:900;color:#6d5c82}
+.page.done{background:var(--mint);color:#176744}
+.progress{height:12px;background:#eee5f6;border-radius:999px;overflow:hidden;margin:12px 0 4px}
+.bar{height:100%;background:linear-gradient(90deg,var(--pink),var(--purple));width:0%}
+button.primary,button.secondary,button.danger{border:0;border-radius:16px;padding:12px 12px;font-weight:900;font-size:15px;margin-top:8px}
+button.primary{background:var(--pink);color:#fff} button.secondary{background:#fff;color:var(--purple);border:2px solid #eadcff} button.danger{background:var(--red);color:#fff}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+input,select{width:100%;border:2px solid #eee1ff;border-radius:14px;padding:12px;margin:6px 0 10px;font-size:16px;background:#fff}
+small{color:#786f83}.config{font-size:13px;background:#fff8cc;border:2px dashed #ffcc5c}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#332947;color:#fff;padding:12px 18px;border-radius:999px;font-weight:900;display:none;z-index:20}
+.hidden{display:none}.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.dash{background:#fff;border-radius:20px;padding:14px}.emoji{font-size:30px}.notice{background:#fff4f8;border:2px solid #ffd6e7;border-radius:18px;padding:12px;margin:10px 0;font-weight:800}
+.reward{background:#fff;border:2px solid #ffe1a7;border-radius:18px;padding:12px;margin:10px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="hero">
+    <h1 class="title">✨ Study Quest ✨</h1>
+    <p class="subtitle">課題をクエスト化してXPゲット！</p>
+    <div class="mode-tabs">
+      <button class="mode active" onclick="setMode('child')">📱 子ども</button>
+      <button class="mode" onclick="setMode('parent')">👩 親管理</button>
+      <button class="mode" onclick="setMode('dashboard')">📊 ダッシュボード</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="setKid('SHIANA')">🌟 SHIANA</button>
+      <button class="tab" onclick="setKid('SUMILE')">🎀 SUMILE</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="big" id="level">Lv.1</div><div class="label">レベル</div></div>
+      <div class="stat"><div class="big" id="xp">0XP</div><div class="label">未換金XP</div></div>
+    </div>
+  </div>
+
+  <section id="childView">
+    
+
+    <div class="card">
+      <h2>📚 今日のクエスト</h2>
+      <div id="quests"></div>
+    </div>
+
+    <div class="card">
+      <h2>➕ 課題を追加</h2>
+      <select id="subject"><option>数学</option><option>英語</option><option>国語</option><option>理科</option><option>社会</option><option>探究</option><option>その他</option></select>
+      <input id="taskTitle" placeholder="例：数学ワーク" />
+      <input id="startPage" type="number" placeholder="開始ページ / Step番号" />
+      <input id="endPage" type="number" placeholder="終了ページ / Step番号" />
+      <input id="xpPerPage" type="number" value="1" placeholder="1ページあたりXP" />
+      <button class="primary" onclick="addTask()">クエスト追加</button>
+      <small>追加した課題は「親確認待ち」。承認後にXPが確定します。</small>
+    </div>
+
+    <div class="card">
+      <h2>🎁 ごほうび申請</h2>
+      <input id="rewardXp" type="number" placeholder="使うXP 例：5" />
+      <input id="rewardMemo" placeholder="例：ガチャ1回" />
+      <button class="primary" onclick="requestReward()">交換申請</button>
+    </div>
+  </section>
+
+  <section id="parentView" class="hidden">
+    <div class="card">
+      <h2>✅ 承認待ち課題</h2>
+      <div id="pendingTasks"></div>
+    </div>
+    <div class="card">
+      <h2>🎁 承認待ちごほうび</h2>
+      <div id="pendingRewards"></div>
+    </div>
+  </section>
+
+  <section id="dashboardView" class="hidden">
+    <div class="card">
+      <h2>📊 ファミリーダッシュボード</h2>
+      <div class="dash-grid" id="dashboard"></div>
+    </div>
+    <div class="card">
+      <h2>🏅 バッジ候補</h2>
+      <div class="notice">5ページ達成：プチ集中バッジ</div>
+      <div class="notice">10XP達成：レベルアップバッジ</div>
+      <div class="notice">探究提出：大物クリアバッジ</div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentKid="SHIANA", currentMode="child";
+let data=JSON.parse(localStorage.getItem("studyQuestData")||"null")||{
+ tasks:[
+  {id:"T001",kid:"SUMILE",subject:"数学",title:"数学ワーク",start:12,end:20,xp:1,approved:true,done:[12,13,14]},
+  {id:"T002",kid:"SUMILE",subject:"探究",title:"探究学習 中間提出",start:1,end:5,xp:2,approved:false,done:[1]},
+  {id:"T003",kid:"SHIANA",subject:"英語",title:"英語ワーク",start:30,end:35,xp:1,approved:false,done:[]}
+ ],
+ rewards:[]
+};
+localStorage.setItem("studyQuestApiUrl","https://script.google.com/macros/s/AKfycbwTOEtefQHgrNFydgCGeKzHSU59bg92Hnhai_9FXjXNiOIpU_QEGXg2b4KHimJOBwgA/exec");
+document.getElementById("apiUrl").value="https://script.google.com/macros/s/AKfycbwTOEtefQHgrNFydgCGeKzHSU59bg92Hnhai_9FXjXNiOIpU_QEGXg2b4KHimJOBwgA/exec";
+
+function save(){localStorage.setItem("studyQuestData",JSON.stringify(data));}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";setTimeout(()=>t.style.display="none",1600)}
+function setMode(m){currentMode=m;document.querySelectorAll(".mode").forEach(b=>b.classList.remove("active"));[...document.querySelectorAll(".mode")].find(b=>b.textContent.includes(m==="child"?"子ども":m==="parent"?"親管理":"ダッシュボード")).classList.add("active");render();}
+function setKid(k){currentKid=k;document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));[...document.querySelectorAll(".tab")].find(b=>b.textContent.includes(k)).classList.add("active");render();}
+function pagesOf(t){let a=[];for(let i=Number(t.start);i<=Number(t.end);i++)a.push(i);return a;}
+function approvedXp(kid){return data.tasks.filter(t=>t.kid===kid&&t.approved).reduce((s,t)=>s+t.done.length*Number(t.xp||1),0);}
+function pendingXp(kid){return data.tasks.filter(t=>t.kid===kid&&!t.approved).reduce((s,t)=>s+t.done.length*Number(t.xp||1),0);}
+function redeemedXp(kid){return data.rewards.filter(r=>r.kid===kid&&r.approved).reduce((s,r)=>s+Number(r.xp||0),0);}
+function taskProgress(t){const p=pagesOf(t);return p.length?Math.round(t.done.length/p.length*100):0;}
+
+function render(){
+ document.getElementById("childView").classList.toggle("hidden",currentMode!=="child");
+ document.getElementById("parentView").classList.toggle("hidden",currentMode!=="parent");
+ document.getElementById("dashboardView").classList.toggle("hidden",currentMode!=="dashboard");
+ const total=approvedXp(currentKid), available=total-redeemedXp(currentKid);
+ document.getElementById("xp").textContent=available+"XP";
+ document.getElementById("level").textContent="Lv."+(Math.floor(total/10)+1);
+ renderQuests(); renderParent(); renderDashboard();
+}
+function renderQuests(){
+ const q=document.getElementById("quests"); const tasks=data.tasks.filter(t=>t.kid===currentKid);
+ q.innerHTML=tasks.map(t=>{const pages=pagesOf(t),pct=taskProgress(t);return `<div class="quest"><div class="quest-head"><div><div class="subject">${t.subject}</div><strong>${t.title}</strong></div><span class="badge ${t.approved?'approved':'pending'}">${t.approved?'親承認済み':'親確認待ち'}</span></div><div class="progress"><div class="bar" style="width:${pct}%"></div></div><small>${t.done.length}/${pages.length} 完了（${pct}%） ${t.approved?'✨XP反映':'⏳仮XP'}</small><div class="pages">${pages.map(p=>`<button class="page ${t.done.includes(p)?'done':''}" onclick="togglePage('${t.id}',${p})">${t.done.includes(p)?'✓':''}${p}</button>`).join("")}</div></div>`}).join("")||"<p>まだクエストがありません。</p>";
+}
+function renderParent(){
+ const pt=document.getElementById("pendingTasks");
+ const pending=data.tasks.filter(t=>!t.approved);
+ pt.innerHTML=pending.map(t=>`<div class="quest"><div class="quest-head"><div><div class="subject">${t.kid} / ${t.subject}</div><strong>${t.title}</strong><br><small>${t.start}〜${t.end} / ${t.xp}XP</small></div><span class="badge pending">待ち</span></div><div class="actions"><button class="primary" onclick="approveTask('${t.id}')">承認</button><button class="secondary" onclick="rejectTask('${t.id}')">削除</button></div></div>`).join("")||"<p>承認待ちはありません。</p>";
+ const pr=document.getElementById("pendingRewards");
+ const rewards=data.rewards.filter(r=>!r.approved);
+ pr.innerHTML=rewards.map(r=>`<div class="reward"><strong>${r.kid}</strong>：${r.memo}<br><small>${r.xp}XP 使用申請</small><div class="actions"><button class="primary" onclick="approveReward('${r.id}')">承認</button><button class="secondary" onclick="rejectReward('${r.id}')">却下</button></div></div>`).join("")||"<p>承認待ちはありません。</p>";
+}
+function renderDashboard(){
+ const d=document.getElementById("dashboard");
+ d.innerHTML=["SHIANA","SUMILE"].map(k=>{const total=approvedXp(k), available=total-redeemedXp(k), tasks=data.tasks.filter(t=>t.kid===k), incomplete=tasks.filter(t=>taskProgress(t)<100).length, pend=pendingXp(k); return `<div class="dash"><div class="emoji">${k==="SHIANA"?"🌟":"🎀"}</div><h3>${k}</h3><div class="big">Lv.${Math.floor(total/10)+1}</div><p>⭐ 未換金 ${available}XP</p><p>📚 未完了 ${incomplete}件</p><p>⏳ 仮XP ${pend}XP</p><p>🎁 ガチャまで あと${Math.max(0,5-(available%5||5))}XP</p></div>`}).join("");
+}
+function togglePage(id,page){const t=data.tasks.find(x=>x.id===id); if(t.done.includes(page))t.done=t.done.filter(x=>x!==page); else t.done.push(page); save();render();sync("togglePage",{id,page});toast(t.approved?`+${t.xp}XP!`:"チェックしました");}
+function addTask(){const start=Number(document.getElementById("startPage").value),end=Number(document.getElementById("endPage").value),title=document.getElementById("taskTitle").value.trim(); if(!title||!start||!end||end<start){toast("課題名とページを確認してね");return;} const task={id:"T"+Date.now(),kid:currentKid,subject:document.getElementById("subject").value,title,start,end,xp:Number(document.getElementById("xpPerPage").value||1),approved:false,done:[]}; data.tasks.push(task);save();render();sync("addTask",task);toast("親確認待ちに追加");}
+function requestReward(){const xp=Number(document.getElementById("rewardXp").value),memo=document.getElementById("rewardMemo").value.trim(); if(!xp||!memo){toast("XPと内容を入力してね");return;} const r={id:"R"+Date.now(),kid:currentKid,xp,memo,approved:false,date:new Date().toISOString()}; data.rewards.push(r);save();render();sync("requestReward",r);toast("ごほうび申請しました");}
+function approveTask(id){const t=data.tasks.find(x=>x.id===id);t.approved=true;save();render();sync("approveTask",{id});toast("課題を承認しました");}
+function rejectTask(id){data.tasks=data.tasks.filter(t=>t.id!==id);save();render();sync("rejectTask",{id});toast("課題を削除しました");}
+function approveReward(id){const r=data.rewards.find(x=>x.id===id);r.approved=true;save();render();sync("approveReward",{id});toast("ごほうび承認");}
+function rejectReward(id){data.rewards=data.rewards.filter(r=>r.id!==id);save();render();sync("rejectReward",{id});toast("ごほうび却下");}
+function saveApiUrl(){localStorage.setItem("studyQuestApiUrl",document.getElementById("apiUrl").value.trim());toast("URLを保存しました");}
+async function sync(action,payload){const url=localStorage.getItem("studyQuestApiUrl"); if(!url)return; try{await fetch(url,{method:"POST",mode:"no-cors",headers:{"Content-Type":"application/json"},body:JSON.stringify({action,payload})});}catch(e){console.log(e);}}
+render();
+</script>
+</body>
+</html>
